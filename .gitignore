@@ -1,0 +1,15 @@
+# Build output
+build/
+*.o
+*.dSYM/
+
+# macOS
+.DS_Store
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+
+# Profile data (user-specific)
+*.json
