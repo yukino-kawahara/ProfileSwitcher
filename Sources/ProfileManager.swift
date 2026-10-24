@@ -85,7 +85,7 @@ class ProfileManager {
                 modelReasoningEffort: "high",
                 modelContextWindow: 128000,
                 modelAutoCompactTokenLimit: 115200,
-                webSearch: "enabled",
+                webSearch: "live",
                 extraLines: []
             ),
             Profile(

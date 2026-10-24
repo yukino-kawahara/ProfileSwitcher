@@ -30,7 +30,7 @@ class SettingsViewController: NSViewController {
     private var statusLabel: NSTextField!
     private var editorContainer: NSStackView!
     
-    // Row containers (NSStackView with [label, field, spacer])
+    // Row containers
     private var nameRow: NSStackView!
     private var modelRow: NSStackView!
     private var providerRow: NSStackView!
@@ -45,6 +45,10 @@ class SettingsViewController: NSViewController {
     private var providerTextField: NSTextField!
     private var ctxTextField: NSTextField!
     private var catalogTextField: NSTextField!
+    
+    // Valid web_search values
+    private let webSearchOptions = ["live", "cached", "indexed", "disabled"]
+    private let effortOptions = ["minimal", "low", "medium", "high"]
     
     override func loadView() {
         self.view = NSView(frame: NSRect(x: 0, y: 0, width: 580, height: 540))
@@ -167,13 +171,13 @@ class SettingsViewController: NSViewController {
         effortRow.addArrangedSubview(effortPicker)
         effortRow.addArrangedSubview(NSView())
         
-        // Web search segmented
+        // Web search segmented (4 options)
         let wsRow = NSStackView()
         wsRow.orientation = .horizontal
         wsRow.spacing = 8
         wsRow.alignment = .firstBaseline
         let wl = makeLabel("Web Search")
-        wsPicker = NSSegmentedControl(labels: ["on", "off"], trackingMode: .selectOne, target: nil, action: nil)
+        wsPicker = NSSegmentedControl(labels: ["live", "cached", "indexed", "off"], trackingMode: .selectOne, target: nil, action: nil)
         wsPicker.selectedSegment = 0
         wsPicker.translatesAutoresizingMaskIntoConstraints = false
         wsRow.addArrangedSubview(wl)
@@ -231,7 +235,7 @@ class SettingsViewController: NSViewController {
             name: "p\(n)", displayName: "New \(n)", model: "o4-mini",
             modelProvider: nil, modelCatalogJson: nil,
             modelReasoningEffort: "high", modelContextWindow: 128000,
-            modelAutoCompactTokenLimit: 115200, webSearch: "enabled", extraLines: []
+            modelAutoCompactTokenLimit: 115200, webSearch: "live", extraLines: []
         ))
         reloadList()
         if !profiles.isEmpty {
@@ -282,11 +286,14 @@ class SettingsViewController: NSViewController {
         ctxTextField.stringValue = String(p.modelContextWindow ?? 128000)
         catalogTextField.stringValue = p.modelCatalogJson ?? ""
         
-        let efforts = ["minimal", "low", "medium", "high"]
-        if let e = p.modelReasoningEffort, let seg = efforts.firstIndex(of: e) {
+        if let e = p.modelReasoningEffort, let seg = effortOptions.firstIndex(of: e) {
             effortPicker.selectedSegment = seg
         }
-        wsPicker.selectedSegment = (p.webSearch == "disabled") ? 1 : 0
+        if let ws = p.webSearch, let seg = webSearchOptions.firstIndex(of: ws) {
+            wsPicker.selectedSegment = seg
+        } else {
+            wsPicker.selectedSegment = 0
+        }
         updateCatalogVisibility()
     }
     
@@ -294,15 +301,15 @@ class SettingsViewController: NSViewController {
         let idx = tableView.selectedRow
         guard idx >= 0, idx < profiles.count else { return }
         
-        let efforts = ["minimal", "low", "medium", "high"]
         let seg = effortPicker.selectedSegment
         profiles[idx].displayName = nameField.stringValue
         profiles[idx].model = modelTextField.stringValue
         let prov = providerTextField.stringValue
         profiles[idx].modelProvider = prov.isEmpty ? nil : prov
         profiles[idx].modelContextWindow = Int(ctxTextField.stringValue) ?? 128000
-        profiles[idx].modelReasoningEffort = seg >= 0 ? efforts[seg] : "high"
-        profiles[idx].webSearch = (wsPicker.selectedSegment == 1) ? "disabled" : "enabled"
+        profiles[idx].modelReasoningEffort = seg >= 0 ? effortOptions[seg] : "high"
+        let wsSeg = wsPicker.selectedSegment
+        profiles[idx].webSearch = wsSeg >= 0 ? webSearchOptions[wsSeg] : "live"
         let cat = catalogTextField.stringValue
         profiles[idx].modelCatalogJson = cat.isEmpty ? nil : cat
     }
